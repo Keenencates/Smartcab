@@ -68,7 +68,7 @@ class LearningAgent(Agent):
 
         # Calculate the maximum Q-value of all actions for a given state
 
-        return max(self.Q[state], key=lambda k: self.Q[state][k])
+        return max(self.Q[state].values())
 
 
     def createQ(self, state):
@@ -77,7 +77,7 @@ class LearningAgent(Agent):
         # When learning, check if the 'state' is not in the Q-table
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
-        if(state not in self.Q):
+        if(state not in self.Q and self.learning):
             self.Q[state] = {'right' : 0.0, 'left' : 0.0, 'forward' : 0.0, None : 0.0}
 
         return
@@ -95,8 +95,8 @@ class LearningAgent(Agent):
         # When learning, choose a random action with 'epsilon' probability
         # Otherwise, choose an action with the highest Q-value for the current state
         # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".
-        if self.learning and random.random() < (1 - self.epsilon):
-            action = self.get_maxQ(state)
+        if self.learning and random.random() > self.epsilon:
+            action = random.choice([each for each in self.Q[state] if self.Q[state][each] is self.get_maxQ(state)])
         else:
             action = random.choice(self.valid_actions)
         
@@ -111,8 +111,9 @@ class LearningAgent(Agent):
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
         
-        #Q(s, a) = ((1 - alpha) * Q(s, a)) + (Reward * alpha)
-        self.Q[state][action] = ((1 - self.alpha) * self.Q[state][action]) + (reward * self.alpha)
+        #Q(s, a) = ((1 - alpha) * Q(s, a)) + (Reward * alpha)i
+        if self.learning:
+            self.Q[state][action] = ((1 - self.alpha) * self.Q[state][action]) + (reward * self.alpha)
         return
 
 
@@ -163,14 +164,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay=.01, display=True, log_metrics=True, optimized=True)
+    sim = Simulator(env, update_delay=.01, display=False, log_metrics=True, optimized=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=30)
+    sim.run(n_test=100)
 
 
 if __name__ == '__main__':
